@@ -209,6 +209,17 @@ exports.handler = async (event, context) => {
     const html = await makeRequest(options, postData);
     console.log('Received HTML response, length:', html.length);
     
+    // Check if we got a security error page
+    if (html.includes('<!DOCTYPE html>') && html.includes('errorpage')) {
+      throw new Error('External website is blocking automated requests due to security policies');
+    }
+    
+    // Check if we got the expected prayer times data
+    if (!html.includes('ifis_bonetider')) {
+      console.log('HTML sample:', html.substring(0, 500));
+      throw new Error('Prayer times data not found in response - external service may have changed');
+    }
+    
     const prayerTimes = parsePrayerTimes(html);
     
     console.log('Successfully fetched prayer times:', prayerTimes);
