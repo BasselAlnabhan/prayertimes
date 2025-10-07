@@ -7,8 +7,10 @@ function App() {
   const [prayerTimes, setPrayerTimes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fetching, setFetching] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [blinkingPrayer, setBlinkingPrayer] = useState(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
 
   // Update current time every second
   useEffect(() => {
@@ -66,13 +68,19 @@ function App() {
     return () => clearInterval(prayerCheckInterval);
   }, [checkIfPrayerTime]);
 
-  const fetchPrayerTimes = async () => {
+  const fetchPrayerTimes = async (isRetry = false) => {
     try {
-      setLoading(true);
+      if (isRetry) {
+        setFetching(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      
       const response = await fetch('/.netlify/functions/prayer-times');
       
       if (!response.ok) {
-        throw new Error('Failed to fetch prayer times');
+        throw new Error(`Server responded with status ${response.status}`);
       }
       
       const data = await response.json();
@@ -81,24 +89,20 @@ function App() {
     } catch (err) {
       console.error('Error fetching prayer times:', err);
       setError(err.message);
-      // Fallback to static times if API fails
-      setPrayerTimes({
-        date: moment().format('YYYY-MM-DD'),
-        fajr: '06:26',
-        shuruk: '08:54',
-        dhohr: '12:17',
-        asr: '13:19',
-        magrib: '15:31',
-        isha: '18:55'
-      });
+      setPrayerTimes(null);
     } finally {
       setLoading(false);
+      setFetching(false);
     }
   };
 
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
+  };
+
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
   };
 
   const formatPrayerName = (name) => {
@@ -115,7 +119,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="prayer-times-page">
+      <div className={`prayer-times-page ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
         <h1>Bönetider</h1>
         <div className="loading">
           <p>Laddar bönetider...</p>
@@ -126,25 +130,36 @@ function App() {
 
   if (error && !prayerTimes) {
     return (
-      <div className="prayer-times-page">
+      <div className={`prayer-times-page ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
         <h1>Bönetider</h1>
-        <div className="error">
-          <p>Fel vid hämtning av bönetider: {error}</p>
-          <button onClick={fetchPrayerTimes}>Försök igen</button>
+        <div className="error-state">
+          <p>Kunde inte hämta bönetider</p>
+          <button 
+            onClick={() => fetchPrayerTimes(true)} 
+            disabled={fetching}
+            className="retry-button"
+          >
+            {fetching ? 'Försöker igen...' : 'Försök igen'}
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="prayer-times-page">
+    <div className={`prayer-times-page ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
       <h1>Bönetider</h1>
 
       <div className="controls-section">
         <i 
-          className={`fa-solid ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'} fa-3x volume-trigger`}
+          className={`fa-solid ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'} fa-2x volume-trigger`}
           onClick={toggleMute}
           title={isMuted ? 'Slå på ljud' : 'Stäng av ljud'}
+        />
+        <i 
+          className={`fa-solid ${isDarkTheme ? 'fa-moon' : 'fa-sun'} fa-2x theme-trigger`}
+          onClick={toggleTheme}
+          title={isDarkTheme ? 'Ljust tema' : 'Mörkt tema'}
         />
       </div>
 
@@ -152,6 +167,12 @@ function App() {
         <h2>{currentTime.format('HH:mm')}</h2>
         <h3>{currentTime.format('dddd, MMMM Do YYYY')}</h3>
       </div>
+
+      {fetching && (
+        <div className="fetching-indicator">
+          <p>Uppdaterar bönetider...</p>
+        </div>
+      )}
 
       {prayerTimes && (
         <div className="prayer-container">
@@ -176,11 +197,6 @@ function App() {
         </div>
       )}
 
-      {error && (
-        <div className="error-notice">
-          <small>Använder reservtider på grund av: {error}</small>
-        </div>
-      )}
     </div>
   );
 }

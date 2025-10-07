@@ -7,32 +7,69 @@
   justify-content: center;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Dark Theme (Default) */
+.prayer-times-page.dark-theme {
+  background: rgba(30, 30, 30, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Light Theme */
+.prayer-times-page.light-theme {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333333;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .prayer-times-page h1 {
   font-size: 3rem;
-  color: ghostwhite;
   text-align: center;
   margin: 0 0 20px 0;
+  transition: color 0.3s ease;
+}
+
+.dark-theme h1 {
+  color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.light-theme h1 {
+  color: #333333;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
 }
 
 .controls-section {
   margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
 }
 
-.volume-trigger {
-  color: ghostwhite;
+.volume-trigger,
+.theme-trigger {
   cursor: pointer;
   transition: color 0.3s ease, transform 0.2s ease;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.volume-trigger:hover {
+.dark-theme .volume-trigger,
+.dark-theme .theme-trigger {
+  color: #ffffff;
+}
+
+.light-theme .volume-trigger,
+.light-theme .theme-trigger {
+  color: #333333;
+}
+
+.volume-trigger:hover,
+.theme-trigger:hover {
   color: #ffd700;
   transform: scale(1.1);
 }
@@ -40,10 +77,9 @@
 .date-section h2,
 .date-section h3 {
   font-size: 2.5rem;
-  color: ghostwhite;
   text-align: center;
   margin: 10px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  transition: color 0.3s ease;
 }
 
 .date-section h3 {
@@ -51,20 +87,41 @@
   opacity: 0.9;
 }
 
+.dark-theme .date-section h2,
+.dark-theme .date-section h3 {
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .date-section h2,
+.light-theme .date-section h3 {
+  color: #333333;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+}
+
 .prayer-container {
-  background-color: rgba(255, 255, 255, 0.1);
   width: 100%;
   border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   padding: 20px;
   text-align: center;
   backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.dark-theme .prayer-container {
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.light-theme .prayer-container {
+  background-color: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .prayer {
   font-size: 2rem;
-  color: ghostwhite;
   text-transform: capitalize;
   margin: 15px 0;
   display: flex;
@@ -72,69 +129,169 @@
   align-items: center;
   padding: 10px 20px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.prayer:hover {
+.dark-theme .prayer {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .prayer:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.light-theme .prayer {
+  color: #333333;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .prayer:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
 .prayer-name {
+  transition: text-shadow 0.3s ease;
+}
+
+.dark-theme .prayer-name {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .prayer-name {
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .prayer-time {
   font-size: 1.8rem;
-  color: #00ff88;
   font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.dark-theme .prayer-time {
+  color: #00ff88;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.loading,
-.error {
-  text-align: center;
-  color: ghostwhite;
-  font-size: 1.5rem;
-  padding: 20px;
+.light-theme .prayer-time {
+  color: #007acc;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-.error button {
+.loading {
+  text-align: center;
+  font-size: 1.5rem;
+  padding: 20px;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .loading {
+  color: #ffffff;
+}
+
+.light-theme .loading {
+  color: #333333;
+}
+
+.error-state {
+  text-align: center;
+  padding: 20px;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .error-state {
+  color: #ffffff;
+}
+
+.light-theme .error-state {
+  color: #333333;
+}
+
+.error-state p {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.retry-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: 25px;
   font-size: 1rem;
   cursor: pointer;
-  margin-top: 10px;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+  font-weight: 600;
 }
 
-.error button:hover {
-  transform: scale(1.05);
+.retry-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.error-notice {
-  margin-top: 20px;
+.retry-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fetching-indicator {
   text-align: center;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
 }
 
-.error-notice small {
-  color: #ffcccc;
-  font-size: 0.9rem;
-  opacity: 0.8;
+.dark-theme .fetching-indicator {
+  background: rgba(255, 255, 255, 0.1);
+  color: #00ff88;
 }
+
+.light-theme .fetching-indicator {
+  background: rgba(0, 0, 0, 0.05);
+  color: #007acc;
+}
+
+.fetching-indicator p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
 
 .loading p {
   font-size: 2rem;
   font-weight: 700;
   margin: 10px 0;
-  color: ghostwhite;
   text-align: center;
   padding: 12px 0;
   border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.dark-theme .loading p {
+  color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .loading p {
+  color: #333333;
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
 }
 
 @keyframes blink {
@@ -151,7 +308,14 @@
 
 .blink {
   animation: blink 1s infinite;
+}
+
+.dark-theme .blink {
   color: #ff6b6b !important;
+}
+
+.light-theme .blink {
+  color: #e74c3c !important;
 }
 
 @media (max-width: 600px) {
@@ -183,7 +347,12 @@
     font-size: 1.4rem;
   }
 
-  .volume-trigger {
-    font-size: 2rem !important;
+  .volume-trigger,
+  .theme-trigger {
+    font-size: 1.5rem !important;
+  }
+
+  .controls-section {
+    gap: 15px;
   }
 }
