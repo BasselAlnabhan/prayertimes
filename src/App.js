@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import moment from 'moment';
 import './App.css';
 
@@ -24,6 +24,39 @@ function App() {
     fetchPrayerTimes();
   }, []);
 
+  const checkIfPrayerTime = useCallback(() => {
+    if (!prayerTimes) return;
+
+    const prayerArray = [
+      { name: 'fajr', time: prayerTimes.fajr },
+      { name: 'shuruk', time: prayerTimes.shuruk },
+      { name: 'dhohr', time: prayerTimes.dhohr },
+      { name: 'asr', time: prayerTimes.asr },
+      { name: 'magrib', time: prayerTimes.magrib },
+      { name: 'isha', time: prayerTimes.isha }
+    ];
+
+    const nextPrayer = prayerArray.find(prayer =>
+      moment(prayer.time, 'HH:mm').isSameOrAfter(moment(currentTime, 'HH:mm'))
+    );
+
+    if (nextPrayer && moment(currentTime, 'HH:mm').isSame(moment(nextPrayer.time, 'HH:mm'), 'minute')) {
+      setBlinkingPrayer(nextPrayer.name);
+      
+      // Stop blinking after 1 minute
+      setTimeout(() => {
+        setBlinkingPrayer(null);
+      }, 60000);
+
+      // Play audio notification if not muted
+      if (!isMuted) {
+        // Note: Audio would need to be added to public folder
+        // const audio = new Audio('/azan.mp3');
+        // audio.play().catch(console.error);
+      }
+    }
+  }, [prayerTimes, currentTime, isMuted]);
+
   // Check for prayer time notifications every 6 seconds
   useEffect(() => {
     const prayerCheckInterval = setInterval(() => {
@@ -31,7 +64,7 @@ function App() {
     }, 6000);
 
     return () => clearInterval(prayerCheckInterval);
-  }, [prayerTimes, currentTime]);
+  }, [checkIfPrayerTime]);
 
   const fetchPrayerTimes = async () => {
     try {
@@ -63,38 +96,6 @@ function App() {
     }
   };
 
-  const checkIfPrayerTime = () => {
-    if (!prayerTimes) return;
-
-    const prayerArray = [
-      { name: 'fajr', time: prayerTimes.fajr },
-      { name: 'shuruk', time: prayerTimes.shuruk },
-      { name: 'dhohr', time: prayerTimes.dhohr },
-      { name: 'asr', time: prayerTimes.asr },
-      { name: 'magrib', time: prayerTimes.magrib },
-      { name: 'isha', time: prayerTimes.isha }
-    ];
-
-    const nextPrayer = prayerArray.find(prayer =>
-      moment(prayer.time, 'HH:mm').isSameOrAfter(moment(currentTime, 'HH:mm'))
-    );
-
-    if (nextPrayer && moment(currentTime, 'HH:mm').isSame(moment(nextPrayer.time, 'HH:mm'), 'minute')) {
-      setBlinkingPrayer(nextPrayer.name);
-      
-      // Stop blinking after 1 minute
-      setTimeout(() => {
-        setBlinkingPrayer(null);
-      }, 60000);
-
-      // Play audio notification if not muted
-      if (!isMuted) {
-        // Note: Audio would need to be added to public folder
-        // const audio = new Audio('/azan.mp3');
-        // audio.play().catch(console.error);
-      }
-    }
-  };
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
