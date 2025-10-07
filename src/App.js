@@ -80,7 +80,17 @@ function App() {
       const response = await fetch('/.netlify/functions/prayer-times');
       
       if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
+        // Try to get error details from response
+        let errorMessage = `Server responded with status ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (e) {
+          // If we can't parse the error response, use the status
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
@@ -177,7 +187,7 @@ function App() {
       {prayerTimes && (
         <div className="prayer-container">
           {Object.entries(prayerTimes)
-            .filter(([key]) => key !== 'date')
+            .filter(([key]) => !['date', '_fallback', '_error'].includes(key))
             .map(([name, time]) => (
               <div key={name} className="prayer">
                 <span 

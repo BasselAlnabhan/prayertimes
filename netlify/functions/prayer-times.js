@@ -31,30 +31,65 @@ function makeRequest(options, postData = null) {
 // Function to parse HTML and extract prayer times
 function parsePrayerTimes(html) {
   try {
-    // Simple regex-based HTML parsing (for production, consider using a proper HTML parser)
+    console.log('Parsing HTML for prayer times...');
+    
+    // Find the tbody with id="ifis_bonetider"
     const tableMatch = html.match(/<tbody[^>]*id=['"']ifis_bonetider['"'][^>]*>(.*?)<\/tbody>/s);
     
     if (!tableMatch) {
+      console.log('Table with id="ifis_bonetider" not found');
       throw new Error('Prayer times table not found');
     }
     
     const tableContent = tableMatch[1];
-    const rows = tableContent.match(/<tr[^>]*>(.*?)<\/tr>/gs);
+    console.log('Found table content, length:', tableContent.length);
     
-    if (!rows || rows.length === 0) {
-      throw new Error('No prayer time rows found');
-    }
+    // The HTML structure shows that <tr> tags are not properly closed, so we need to handle this
+    // Split by <tr and then extract the data
+    const rowParts = tableContent.split('<tr');
     
     const today = new Date();
     const currentDay = today.getDate();
     
-    // Find today's row
-    for (const row of rows) {
-      const cells = row.match(/<td[^>]*>(.*?)<\/td>/gs);
+    console.log(`Looking for day ${currentDay} in ${rowParts.length} row parts`);
+    
+    // First, try to find the row with class "today"
+    for (const rowPart of rowParts) {
+      if (rowPart.includes('class="odd today"') || rowPart.includes('class="even today"')) {
+        console.log('Found today row by class');
+        const cells = rowPart.match(/<td[^>]*>(.*?)<\/td>/g);
+        
+        if (cells && cells.length >= 6) {
+          const cellTexts = cells.map(cell => 
+            cell.replace(/<[^>]*>/g, '').trim()
+          );
+          
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(currentDay).padStart(2, '0');
+          
+          const result = {
+            date: `${year}-${month}-${day}`,
+            fajr: cellTexts[1],
+            shuruk: cellTexts[2],
+            dhohr: cellTexts[3],
+            asr: cellTexts[4],
+            magrib: cellTexts[5],
+            isha: cellTexts[6]
+          };
+          
+          console.log('Found today\'s prayer times by class:', result);
+          return result;
+        }
+      }
+    }
+    
+    // If not found by class, look for the current day number
+    for (const rowPart of rowParts) {
+      const cells = rowPart.match(/<td[^>]*>(.*?)<\/td>/g);
       
-      if (!cells || cells.length < 7) continue;
+      if (!cells || cells.length < 6) continue;
       
-      // Extract text content from cells
       const cellTexts = cells.map(cell => 
         cell.replace(/<[^>]*>/g, '').trim()
       );
@@ -66,7 +101,7 @@ function parsePrayerTimes(html) {
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const dayStr = String(day).padStart(2, '0');
         
-        return {
+        const result = {
           date: `${year}-${month}-${dayStr}`,
           fajr: cellTexts[1],
           shuruk: cellTexts[2],
@@ -75,12 +110,48 @@ function parsePrayerTimes(html) {
           magrib: cellTexts[5],
           isha: cellTexts[6]
         };
+        
+        console.log('Found today\'s prayer times by day number:', result);
+        return result;
       }
     }
     
-    throw new Error('Today\'s prayer times not found');
+    // If still not found, get the first valid row for debugging
+    console.log('Could not find today\'s specific day, trying first valid row...');
+    for (const rowPart of rowParts) {
+      const cells = rowPart.match(/<td[^>]*>(.*?)<\/td>/g);
+      
+      if (!cells || cells.length < 6) continue;
+      
+      const cellTexts = cells.map(cell => 
+        cell.replace(/<[^>]*>/g, '').trim()
+      );
+      
+      // Check if this looks like a valid prayer time row
+      if (cellTexts[1] && cellTexts[1].match(/^[0-9]{1,2}:[0-9]{2}$/)) {
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        
+        const result = {
+          date: `${year}-${month}-${day}`,
+          fajr: cellTexts[1],
+          shuruk: cellTexts[2],
+          dhohr: cellTexts[3],
+          asr: cellTexts[4],
+          magrib: cellTexts[5],
+          isha: cellTexts[6]
+        };
+        
+        console.log('Using first valid row as fallback:', result);
+        return result;
+      }
+    }
+    
+    throw new Error('No valid prayer times found in table');
   } catch (error) {
     console.error('Error parsing prayer times:', error);
+    console.log('HTML sample (first 500 chars):', html.substring(0, 500));
     throw error;
   }
 }
@@ -136,6 +207,8 @@ exports.handler = async (event, context) => {
     };
 
     const html = await makeRequest(options, postData);
+    console.log('Received HTML response, length:', html.length);
+    
     const prayerTimes = parsePrayerTimes(html);
     
     console.log('Successfully fetched prayer times:', prayerTimes);
@@ -149,29 +222,12 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Error in prayer-times function:', error);
     
-    // Return fallback prayer times if the external service fails
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    
-    const fallbackTimes = {
-      date: `${year}-${month}-${day}`,
-      fajr: '06:26',
-      shuruk: '08:54',
-      dhohr: '12:17',
-      asr: '13:19',
-      magrib: '15:31',
-      isha: '18:55'
-    };
-    
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        ...fallbackTimes,
-        _fallback: true,
-        _error: error.message
+        error: 'Failed to fetch prayer times',
+        message: error.message
       })
     };
   }
